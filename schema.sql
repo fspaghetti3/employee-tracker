@@ -19,11 +19,11 @@ CREATE TABLE roles (
 );
 
 CREATE TABLE employees (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(30) NOT NULL,
     last_name VARCHAR(30) NOT NULL,
     role_title VARCHAR(30),
-    manager_id INT NULL,
+    manager_id INT UNSIGNED,
     FOREIGN KEY (role_title) REFERENCES roles(title),
     FOREIGN KEY (manager_id) REFERENCES employees(id)
 );

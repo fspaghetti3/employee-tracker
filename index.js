@@ -9,7 +9,23 @@ const connection = mysql.createConnection({
     database: 'company_db'
 });
 
+const asciiArt = 
+
+` 
+ /$$$$$$$$                      /$$                                           /$$$$$$$$                       /$$                        
+| $$_____/                     | $$                                          |__  $$__/                      | $$                        
+| $$      /$$$$$$/$$$$  /$$$$$$| $$ /$$$$$$ /$$   /$$ /$$$$$$  /$$$$$$          | $$ /$$$$$$ /$$$$$$  /$$$$$$| $$   /$$ /$$$$$$  /$$$$$$ 
+| $$$$$  | $$_  $$_  $$/$$__  $| $$/$$__  $| $$  | $$/$$__  $$/$$__  $$         | $$/$$__  $|____  $$/$$_____| $$  /$$//$$__  $$/$$__  $$
+| $$__/  | $$ \ $$ \ $| $$  \ $| $| $$  \ $| $$  | $| $$$$$$$| $$$$$$$$         | $| $$  \__//$$$$$$| $$     | $$$$$$/| $$$$$$$| $$  \__/
+| $$     | $$ | $$ | $| $$  | $| $| $$  | $| $$  | $| $$_____| $$_____/         | $| $$     /$$__  $| $$     | $$_  $$| $$_____| $$      
+| $$$$$$$| $$ | $$ | $| $$$$$$$| $|  $$$$$$|  $$$$$$|  $$$$$$|  $$$$$$$         | $| $$    |  $$$$$$|  $$$$$$| $$ \  $|  $$$$$$| $$      
+|________|__/ |__/ |__| $$____/|__/\______/ \____  $$\_______/\_______/         |__|__/     \_______/\_______|__/  \__/\_______|__/      
+                      | $$                  /$$  | $$                                                                                    
+                      | $$                 |  $$$$$$/                                                                                    
+                      |__/                  \______/                                                                                     `
+
 function mainMenu() {
+    console.log(asciiArt)
     inquirer.prompt({
         name: 'action',
         type: 'list',
@@ -80,6 +96,9 @@ function viewAllEmployees() {
 function addEmployee() {
 
     connection.query('SELECT * FROM roles', (err, roles) => {
+        if (err) throw err;
+
+        connection.query("SELECT id, first_name, last_name FROM employees WHERE role_title = 'Manager'", (err, managers) => {
     inquirer.prompt([
         {
             name: "first_name",
@@ -99,8 +118,12 @@ function addEmployee() {
         },
         {
             name: "manager_id",
-            type: "input",
+            type: "list",
             message: "Enter the manager ID for this employee (or leave blank if none):",
+            choices: managers.map(manager => ({
+                name: `${manager.first_name} ${manager.last_name}`,
+                value:  manager.id.toString()
+            })).concat([{name: 'None', value: null}])
         }
     ]).then(answers => {
         connection.query(
@@ -114,6 +137,7 @@ function addEmployee() {
         );
     });
   });
+});
 }
 
 function addRole() {
@@ -211,7 +235,7 @@ function updateEmployeeRole() {
                         }))
                     }
                 ]).then(answers => {
-                    const newRoleTitle = answers.roleTitle;
+                    const newRoleTitle = answers.roleTitle;   
  
                     connection.query('UPDATE employees SET role_title = ? WHERE id = ?', [newRoleTitle, selectedEmployeeId], (err, results) => {
                         if (err) throw err;
