@@ -61,7 +61,168 @@ function viewAllDepartments() {
     });
 }
 
-// Implement Functions
+function viewAllRoles() {
+    connection.query('SELECT * FROM roles', (err, results) => {
+        if (err) throw err;
+        console.table(results);
+        mainMenu();
+    });
+}
+
+function viewAllEmployees() {
+    connection.query('SELECT * FROM employees', (err, results) => {
+        if (err) throw err;
+        console.table(results);
+        mainMenu();
+    });
+}
+
+function addEmployee() {
+
+    connection.query('SELECT * FROM roles', (err, roles) => {
+    inquirer.prompt([
+        {
+            name: "first_name",
+            type: "input",
+            message: "Enter the employee's first name:"
+        },
+        {
+            name: "last_name",
+            type: "input",
+            message: "Enter the employee's last name:"
+        },
+        {
+            name: "role_title",
+            type: "list",
+            message: "Enter the employee's role ID:",
+            choices: roles.map(role => role.title)
+        },
+        {
+            name: "manager_id",
+            type: "input",
+            message: "Enter the manager ID for this employee (or leave blank if none):",
+        }
+    ]).then(answers => {
+        connection.query(
+            'INSERT INTO employees (first_name, last_name, role_title, manager_id) VALUES (?, ?, ?, ?)', 
+            [answers.first_name, answers.last_name, answers.role_title, answers.manager_id || null],
+            (err, results) => {
+                if (err) throw err;
+                console.log('Employee added successfully!');
+                mainMenu();
+            }
+        );
+    });
+  });
+}
+
+function addRole() {
+
+    connection.query('SELECT * FROM departments', (err, departments) => {
+        if (err) throw err;
+
+
+        inquirer.prompt([
+            {
+                name: "title",
+                type: "input",
+                message: "Enter the name for the role you'd like to add:",
+            },
+            {
+                name: "department_id",
+                type: "list",
+                message: "Select the department the role is involved in:",
+                choices: departments.map(department => ({
+                    name: department.name,
+                    value: department.id
+                }))
+            },
+            {
+                name: "salary",
+                type: "input",
+                message: "What is the roles salary?",
+                default: null
+            }
+        ]).then(answers => {
+            connection.query('INSERT INTO roles (title, department_id, salary) VALUES (?, ?, ?)', 
+                [answers.title, answers.department_id, answers.salary || null], 
+                (err, results) => {
+                    if (err) throw err;
+                    console.log('Role added successfully!');
+                    mainMenu();
+            });
+        });
+    });
+}
+
+function addDepartment() {
+    inquirer.prompt([
+        {
+            name: "name",
+            type: "input",
+            message: "Enter the name of the department:"
+        },
+        {
+            name: "description",
+            type: "input",
+            message: "Enter a brief description of the department:",
+            default: null
+        }
+    ]).then(answers => {
+        connection.query('INSERT INTO departments (name, description) VALUES (?, ?)', 
+            [answers.name, answers.description || null], 
+            (err, results) => {
+                if (err) throw err;
+                console.log('Department added successfully!');
+                mainMenu();
+        });
+    });
+}
+
+function updateEmployeeRole() {
+
+    connection.query('SELECT id, first_name, last_name FROM employees', (err, employees) => {
+        if (err) throw err;
+        
+        inquirer.prompt([
+            {
+                name: "employeeId",
+                type: "list",
+                message: "Which employee would you like to select?",
+                choices: employees.map(employee => ({
+                    name: `${employee.first_name} ${employee.last_name}`,
+                    value: employee.id
+                }))
+            }
+        ]).then(answers => {
+            const selectedEmployeeId = answers.employeeId;
+            
+            connection.query('SELECT id, title FROM roles', (err, roles) => {
+                if (err) throw err;
+
+                inquirer.prompt([
+                    {
+                        name: "roleTitle",
+                        type: "list",
+                        message: "Which role would you like to assign to the selected employee?",
+                        choices: roles.map(role => ({
+                            name: role.title,
+                            value: role.title
+                        }))
+                    }
+                ]).then(answers => {
+                    const newRoleTitle = answers.roleTitle;
+ 
+                    connection.query('UPDATE employees SET role_title = ? WHERE id = ?', [newRoleTitle, selectedEmployeeId], (err, results) => {
+                        if (err) throw err;
+                        console.log("Employee role updated successfully!");
+                        mainMenu();
+                    });
+                });
+            });
+        });
+    });
+}
 
 connection.connect(err => {
     if (err) throw err;
